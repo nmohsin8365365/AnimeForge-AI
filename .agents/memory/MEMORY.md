@@ -1,0 +1,1 @@
+- [Drizzle schema IDs](drizzle-zod-identity.md) — use serial primary keys with drizzle-zod insert schemas in this workspace.

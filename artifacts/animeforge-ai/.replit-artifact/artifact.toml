@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "AnimeForge AI"
+description = "An AI-powered anime creation studio for students, artists, fans, and storytellers to turn prompts and sketches into anime scenes and characters."
+version = "1.0.0"
+id = "artifacts/animeforge-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25716
+
+[services.development]
+run = "pnpm --filter @workspace/animeforge-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/animeforge-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/animeforge-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25716"
+BASE_PATH = "/"

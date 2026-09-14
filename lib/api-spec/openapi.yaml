@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: generation
+    description: Mock AI generation operations
+  - name: gallery
+    description: Community gallery operations
+  - name: history
+    description: User generation history
 paths:
   /healthz:
     get:
@@ -24,6 +30,112 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /generate-scene:
+    post:
+      operationId: generateScene
+      tags: [generation]
+      summary: Generate an anime scene from a prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SceneGenerationInput"
+      responses:
+        "200":
+          description: Generated scene
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationResult"
+        "400":
+          description: Invalid input
+  /convert-sketch:
+    post:
+      operationId: convertSketch
+      tags: [generation]
+      summary: Convert a sketch into an anime character
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SketchConversionInput"
+      responses:
+        "200":
+          description: Converted character
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationResult"
+        "400":
+          description: Invalid input
+  /upload:
+    post:
+      operationId: uploadAsset
+      tags: [generation]
+      summary: Register an uploaded sketch asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadInput"
+      responses:
+        "200":
+          description: Uploaded asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResult"
+  /gallery:
+    get:
+      operationId: getGallery
+      tags: [gallery]
+      summary: Get student gallery posts
+      responses:
+        "200":
+          description: Gallery posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryPost"
+  /gallery/{id}/like:
+    post:
+      operationId: likeGalleryPost
+      tags: [gallery]
+      summary: Like a gallery post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated gallery post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryPost"
+        "404":
+          description: Post not found
+  /history:
+    get:
+      operationId: getHistory
+      tags: [history]
+      summary: Get recent generation history
+      responses:
+        "200":
+          description: Generation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryItem"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +145,107 @@ components:
           type: string
       required:
         - status
+    SceneGenerationInput:
+      type: object
+      properties:
+        prompt:
+          type: string
+          minLength: 3
+        style:
+          type: string
+        aspectRatio:
+          type: string
+      required: [prompt, style, aspectRatio]
+    SketchConversionInput:
+      type: object
+      properties:
+        assetId:
+          type: string
+        prompt:
+          type: string
+        fidelity:
+          type: integer
+          minimum: 0
+          maximum: 100
+        colorIntensity:
+          type: integer
+          minimum: 0
+          maximum: 100
+      required: [assetId, prompt, fidelity, colorIntensity]
+    UploadInput:
+      type: object
+      properties:
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        dataUrl:
+          type: string
+      required: [fileName, mimeType, dataUrl]
+    UploadResult:
+      type: object
+      properties:
+        assetId:
+          type: string
+        fileName:
+          type: string
+        previewUrl:
+          type: string
+      required: [assetId, fileName, previewUrl]
+    GenerationResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+        prompt:
+          type: string
+        style:
+          type: string
+        aspectRatio:
+          type: string
+        imageUrl:
+          type: string
+        thumbnailUrl:
+          type: string
+        createdAt:
+          type: string
+        status:
+          type: string
+      required: [id, kind, prompt, style, aspectRatio, imageUrl, thumbnailUrl, createdAt, status]
+    GalleryPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        imageUrl:
+          type: string
+        title:
+          type: string
+        creatorName:
+          type: string
+        prompt:
+          type: string
+        likes:
+          type: integer
+        style:
+          type: string
+      required: [id, imageUrl, title, creatorName, prompt, likes, style]
+    HistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+        prompt:
+          type: string
+        imageUrl:
+          type: string
+        createdAt:
+          type: string
+        status:
+          type: string
+      required: [id, kind, prompt, imageUrl, createdAt, status]
 

@@ -1,6 +1,6 @@
-# [Project name]
+# AnimeForge AI
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+AnimeForge AI is a full-stack anime creation studio for turning student and creator prompts or sketches into mock anime scenes and characters.
 
 ## Run & Operate
 
@@ -22,23 +22,36 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/animeforge-ai/src/App.tsx` — responsive product UI, auth screens, generation flows, gallery, history, and pricing.
+- `artifacts/animeforge-ai/src/index.css` — AnimeForge visual system, effects, and responsive utilities.
+- `artifacts/api-server/src/routes/` — Express endpoints for scene generation, sketch conversion, uploads, gallery, likes, and history.
+- `artifacts/api-server/src/services/` — replaceable mock generation and gallery service layer.
+- `lib/api-spec/openapi.yaml` — source of truth for the shared API contract.
+- `lib/db/src/schema/` — Drizzle tables for generations and gallery posts.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Mock generation results are stored in PostgreSQL so a real image or image-to-image provider can replace the service layer without changing the client contract.
+- Uploaded sketches are currently registered as preview data URLs for the prototype; persistent binary storage can be added later behind the same upload endpoint.
+- The frontend uses generated React Query hooks from the OpenAPI contract rather than hand-written fetch wrappers.
+- Authentication screens intentionally remain provider-ready UI; real account/session handling can be added through Clerk without coupling it to the generation forms.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Create mock anime scenes from prompts with style and aspect-ratio controls.
+- Upload a PNG/JPG/WEBP sketch, preview it immediately, tune fidelity and color, and convert it into a mock character result.
+- View generation history, browse and like student gallery posts, verify student status, and see credit/pricing plans.
+- Use responsive mobile navigation and login/sign-up screens.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the visual direction futuristic, dark, neon-accented, glassy, and approachable for beginners.
+- Keep prototype AI behavior clearly labeled as mock until a real provider is connected.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- API changes start in `lib/api-spec/openapi.yaml`, then regenerate with `pnpm --filter @workspace/api-spec run codegen`.
+- Run `pnpm run typecheck:libs` after DB schema or API contract changes before checking leaf packages.
 
 ## Pointers
 
