@@ -127,7 +127,6 @@ function StudentBanner() {
       <div className="relative overflow-hidden rounded-2xl border border-[#6C5CE7]/25 bg-[#17142a] px-5 py-5 sm:px-7">
         <div className="absolute -right-8 -top-16 h-40 w-40 rounded-full bg-[#6C5CE7]/20 blur-3xl" />
         <div className="relative flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex items-start gap-3"><div className="mt-0.5 rounded-lg bg-[#6C5CE7]/25 p-2 text-[#a69cff]"><Zap size={17} /></div><div><p className="text-sm font-extrabold text-white">Are you a student?</p><p className="mt-1 text-xs text-[#aaa8c0]">Verify with your school email for <span className="font-bold text-[#ff8e9a]">+40 free credits</span> and an artist badge.</p></div></div>
           <div className="flex items-start gap-3"><div className="mt-0.5 rounded-lg bg-[#6C5CE7]/25 p-2 text-[#a69cff]"><Zap size={17} /></div><div><p className="text-sm font-extrabold text-white">100 Free Generation Credits for Students</p><p className="mt-1 text-xs text-[#aaa8c0]">Verify with your school email to unlock your student credits and an artist badge.</p></div></div>
           <button type="button" data-testid="button-verify-student" onClick={() => setVerified(true)} className="af-button rounded-lg border border-[#8d80f4]/35 bg-[#6C5CE7]/15 px-4 py-2.5 text-xs font-extrabold text-[#c9c4ff] hover:bg-[#6C5CE7]/25">{verified ? 'Verification link sent' : 'Verify student status'} {verified ? <Check className="ml-1 inline" size={14} /> : <ArrowRight className="ml-1 inline" size={14} />}</button>
         </div>
@@ -136,7 +135,7 @@ function StudentBanner() {
   );
 }
 
-function SceneGenerator() {
+function SceneGenerator({ credits, onSuccess }: { credits: number; onSuccess: () => void }) {
   const mutation = useGenerateScene();
   const [prompt, setPrompt] = useState('A quiet ramen shop on the moon, 2am, rain against the glass');
   const [style, setStyle] = useState('Cinematic Anime');
@@ -154,6 +153,7 @@ function SceneGenerator() {
     return () => window.clearInterval(timer);
   }, [isGenerating]);
   const handleGenerate = () => {
+    if (credits < 1) { setNotice('You are out of credits. Verify your student status to keep creating.'); return; }
     if (prompt.trim().length < 3) { setNotice('Give your scene a little more detail first.'); return; }
     setNotice('');
     setProgress(0);
@@ -164,6 +164,8 @@ function SceneGenerator() {
         window.setTimeout(() => {
           setResult(data);
           setIsGenerating(false);
+          queryClient.invalidateQueries({ queryKey: getGetHistoryQueryKey() });
+          onSuccess();
         }, 450);
       },
       onError: () => {
@@ -193,7 +195,7 @@ function ResultPreview({ result }: { result: GenerationResult }) {
   return <div className="af-reveal mt-5 overflow-hidden rounded-xl border border-[#70A1FF]/25 bg-[#0b0c10]"><div className="relative aspect-video"><img src={result.imageUrl || artworkUrl(result.prompt)} alt="Generated anime scene" className="h-full w-full object-cover" /><div className="absolute left-3 top-3 rounded-md bg-[#0b0c10]/75 px-2 py-1 text-[10px] font-bold text-[#9ec1ff] backdrop-blur">FORGED / {result.status || 'complete'}</div></div><div className="flex items-center justify-between p-3"><span className="text-xs text-[#858692]">Your frame is ready to direct.</span><IconButton label="Download scene"><Download size={15} /></IconButton></div></div>;
 }
 
-function SketchConverter() {
+function SketchConverter({ credits, onSuccess }: { credits: number; onSuccess: () => void }) {
   const upload = useUploadAsset();
   const convert = useConvertSketch();
   const [file, setFile] = useState<{ name: string; preview: string; assetId?: string } | null>(null);
@@ -202,9 +204,28 @@ function SketchConverter() {
   const [color, setColor] = useState(64);
   const [notice, setNotice] = useState('');
   const [result, setResult] = useState<GenerationResult | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [isConverting, setIsConverting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!isConverting) return;
+    setProgress(8);
+    const timer = window.setInterval(() => {
+      setProgress((current) => Math.min(current + Math.ceil(Math.random() * 13), 94));
+    }, 180);
+    return () => window.clearInterval(timer);
+  }, [isConverting]);
   const selectFile = (picked?: File) => {
     if (!picked) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(picked.type)) {
+      setNotice('Choose a PNG, JPG, or WEBP sketch.');
+      return;
+    }
+    if (picked.size > 10 * 1024 * 1024) {
+      setNotice('Keep sketches under 10MB for the prototype.');
+      return;
+    }
+    setNotice('');
     const reader = new FileReader();
     reader.onload = () => {
       const preview = String(reader.result);
@@ -216,20 +237,43 @@ function SketchConverter() {
     };
     reader.readAsDataURL(picked);
   };
+  const handleDrop = (event: React.DragEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    selectFile(event.dataTransfer.files?.[0]);
+  };
   const convertSketch = () => {
+    if (credits < 2) { setNotice('You need 2 credits for sketch conversion.'); return; }
     if (!file?.assetId) { setNotice('Upload a sketch to unlock conversion.'); return; }
     setNotice('');
-    convert.mutate({ data: { assetId: file.assetId, prompt, fidelity, colorIntensity: color } }, { onSuccess: setResult, onError: () => setNotice('Conversion paused. Try again when the forge is ready.') });
+    setProgress(0);
+    setIsConverting(true);
+    convert.mutate({ data: { assetId: file.assetId, prompt, fidelity, colorIntensity: color } }, {
+      onSuccess: (data) => {
+        setProgress(100);
+        window.setTimeout(() => {
+          setResult(data);
+          setIsConverting(false);
+          queryClient.invalidateQueries({ queryKey: getGetHistoryQueryKey() });
+          onSuccess();
+        }, 450);
+      },
+      onError: () => {
+        setIsConverting(false);
+        setNotice('Conversion paused. Try again when the forge is ready.');
+      },
+    });
   };
   return (
     <div id="sketch-to-anime" className="af-glass rounded-[22px] p-5 sm:p-7">
       <div className="mb-6 flex items-center justify-between"><div><div className="af-kicker mb-2">02 / sketch converter</div><h3 className="text-xl font-extrabold text-white">Give it a starting line</h3></div><div className="rounded-lg border border-[#ff4757]/20 bg-[#ff4757]/10 px-2.5 py-1.5 text-[10px] font-bold text-[#ff9aa3]">BETA</div></div>
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" data-testid="input-sketch-file" onChange={(e) => selectFile(e.target.files?.[0])} />
-      <button type="button" data-testid="button-upload-sketch" onClick={() => inputRef.current?.click()} className="group relative flex min-h-[166px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#6C5CE7]/45 bg-[#6C5CE7]/[.06] p-5 text-center transition-colors hover:border-[#70A1FF]/65 hover:bg-[#6C5CE7]/[.12]">{file ? <><img src={file.preview} alt="Uploaded sketch preview" className="absolute inset-0 h-full w-full object-cover opacity-45" /><div className="relative rounded-lg bg-[#0b0c10]/80 px-3 py-2 backdrop-blur"><ImageIcon className="mx-auto mb-1 text-[#70A1FF]" size={20} /><span className="text-xs font-bold text-white">{file.name}</span><span className="mt-1 block text-[10px] text-[#a6a7b7]">{upload.isPending ? 'Registering asset...' : 'Ready to direct'}</span></div></> : <><CloudUpload className="mb-3 text-[#70A1FF]" size={25} /><span className="text-sm font-bold text-[#d9d8e4]">Drop a sketch here</span><span className="mt-1 text-xs text-[#747684]">PNG, JPG or WEBP · up to 10MB</span></>}</button>
+      <button type="button" data-testid="button-upload-sketch" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={handleDrop} className="group relative flex min-h-[166px] w-full flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#6C5CE7]/45 bg-[#6C5CE7]/[.06] p-5 text-center transition-colors hover:border-[#70A1FF]/65 hover:bg-[#6C5CE7]/[.12]">{file ? <><img src={file.preview} alt="Uploaded sketch preview" className="absolute inset-0 h-full w-full object-cover opacity-45" /><div className="relative rounded-lg bg-[#0b0c10]/80 px-3 py-2 backdrop-blur"><ImageIcon className="mx-auto mb-1 text-[#70A1FF]" size={20} /><span className="text-xs font-bold text-white">{file.name}</span><span className="mt-1 block text-[10px] text-[#a6a7b7]">{upload.isPending ? 'Registering asset...' : 'Ready to direct'}</span></div></> : <><CloudUpload className="mb-3 text-[#70A1FF]" size={25} /><span className="text-sm font-bold text-[#d9d8e4]">Drop a sketch here</span><span className="mt-1 text-xs text-[#747684]">PNG, JPG or WEBP · up to 10MB</span></>}</button>
       <label className="af-label mb-2 mt-5 block" htmlFor="sketch-prompt">Direction note</label><input id="sketch-prompt" data-testid="input-sketch-prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} className="af-input p-3 text-sm" />
       <Slider label="Line fidelity" value={fidelity} onChange={setFidelity} color="#70A1FF" /><Slider label="Color intensity" value={color} onChange={setColor} color="#FF4757" />
-      <button type="button" data-testid="button-convert-sketch" disabled={convert.isPending || upload.isPending} onClick={convertSketch} className="af-button af-pink mt-5 flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-extrabold text-white disabled:cursor-wait disabled:opacity-70">{convert.isPending ? <><RefreshCw className="mr-2 animate-spin" size={16} /> Painting over the lines...</> : <><Wand2 className="mr-2" size={16} /> Convert sketch <span className="ml-2 rounded bg-white/15 px-1.5 py-0.5 text-[10px]">2 credits</span></>}</button>
-      {notice && <p data-testid="status-sketch-error" className="mt-3 text-center text-xs text-[#ff8e9a]">{notice}</p>}{result && <ResultPreview result={result} />}
+      <button type="button" data-testid="button-convert-sketch" disabled={convert.isPending || upload.isPending || isConverting} onClick={convertSketch} className="af-button af-pink mt-5 flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-extrabold text-white disabled:cursor-wait disabled:opacity-70">{isConverting ? <><RefreshCw className="mr-2 animate-spin" size={16} /> Painting over the lines... {progress}%</> : <><Wand2 className="mr-2" size={16} /> Convert sketch <span className="ml-2 rounded bg-white/15 px-1.5 py-0.5 text-[10px]">2 credits</span></>}</button>
+      {isConverting && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#24253a]" aria-label={`Sketch conversion progress ${progress}%`}><div className="h-full rounded-full bg-gradient-to-r from-[#FF4757] to-[#6C5CE7] transition-all duration-200" style={{ width: `${progress}%` }} /></div>}
+      {notice && <p data-testid="status-sketch-error" className="mt-3 text-center text-xs text-[#ff8e9a]">{notice}</p>}
+      {file && <div className="mt-5"><div className="mb-2 flex items-center justify-between"><p className="af-label">Before / after</p><span className="text-[10px] uppercase tracking-widest text-[#777989]">{result ? 'Mock result ready' : 'Upload preview ready'}</span></div><div className="grid gap-3 sm:grid-cols-2"><div className="overflow-hidden rounded-xl border border-white/10 bg-[#0b0c10]"><div className="border-b border-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#9a9baa]">Before · sketch</div><img src={file.preview} alt="Uploaded sketch before conversion" className="aspect-square w-full object-cover" /></div><div className="overflow-hidden rounded-xl border border-[#6C5CE7]/30 bg-[#0b0c10]"><div className="border-b border-[#6C5CE7]/20 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#aaa1ff]">After · anime</div>{result ? <img src={result.imageUrl || artworkUrl(result.prompt)} alt="Mock anime result after conversion" className="aspect-square w-full object-cover" /> : <div className="grid aspect-square place-items-center p-6 text-center"><Wand2 className="mb-3 text-[#6C5CE7]" size={24} /><p className="text-xs font-semibold text-[#aaaab8]">Your mock anime result will appear here.</p></div>}</div></div></div>}
     </div>
   );
 }
@@ -238,8 +282,8 @@ function Slider({ label, value, onChange, color }: { label: string; value: numbe
   return <label className="mt-4 block"><div className="mb-2 flex justify-between text-xs"><span className="font-semibold text-[#a6a7b5]">{label}</span><span className="font-mono text-[#e2e1eb]">{value}%</span></div><input type="range" min="0" max="100" value={value} onChange={(e) => onChange(Number(e.target.value))} data-testid={`input-${label.toLowerCase().replace(' ', '-')}`} className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#252638] accent-[#6C5CE7]" style={{ accentColor: color }} /></label>;
 }
 
-function Studio() {
-  return <section id="studio" className="af-shell py-16 sm:py-24"><SectionHeader kicker="The cockpit" title="From blank canvas to first frame." detail="Two ways in. One place to keep the weird, wonderful ideas moving." /><div className="grid gap-5 lg:grid-cols-2"><SceneGenerator /><SketchConverter /></div><div className="mt-5 grid gap-5 md:grid-cols-[1.3fr_.7fr]"><div className="af-grid rounded-[22px] border border-white/[.08] p-6"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[#70A1FF]/15 text-[#70A1FF]"><Layers3 size={18} /></div><div><p className="text-sm font-extrabold text-white">Direct in passes</p><p className="mt-1 text-xs text-[#858692]">Build a scene without losing the thread.</p></div></div><div className="mt-7 flex items-center gap-2 overflow-hidden">{['Idea', 'Composition', 'Light', 'Frame'].map((step, i) => <div key={step} className="flex min-w-0 flex-1 items-center gap-2"><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold ${i === 0 ? 'bg-[#6C5CE7] text-white' : 'border border-white/15 text-[#7c7d8a]'}`}>{i + 1}</span><span className="truncate text-[10px] font-semibold text-[#878896]">{step}</span>{i < 3 && <span className="h-px min-w-4 flex-1 bg-white/10" />}</div>)}</div></div><div className="rounded-[22px] border border-[#ff4757]/15 bg-[#24141b] p-6"><div className="af-kicker !text-[#ff7a86]">Credits pulse</div><div className="mt-3 flex items-end justify-between"><span className="text-3xl font-extrabold text-white">40</span><span className="mb-1 text-xs text-[#a79aa0]">of 60 starter</span></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#43232d]"><div className="h-full w-[66%] rounded-full bg-[#FF4757]" /></div><p className="mt-3 text-[11px] leading-5 text-[#ba9da3]">Your credits refresh when you return to the forge.</p></div></div></section>;
+function Studio({ credits, onSceneSuccess, onSketchSuccess }: { credits: number; onSceneSuccess: () => void; onSketchSuccess: () => void }) {
+  return <section id="studio" className="af-shell py-16 sm:py-24"><SectionHeader kicker="The cockpit" title="From blank canvas to first frame." detail="Two ways in. One place to keep the weird, wonderful ideas moving." /><div className="grid gap-5 lg:grid-cols-2"><SceneGenerator credits={credits} onSuccess={onSceneSuccess} /><SketchConverter credits={credits} onSuccess={onSketchSuccess} /></div><div className="mt-5 grid gap-5 md:grid-cols-[1.3fr_.7fr]"><div className="af-grid rounded-[22px] border border-white/[.08] p-6"><div className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-xl bg-[#70A1FF]/15 text-[#70A1FF]"><Layers3 size={18} /></div><div><p className="text-sm font-extrabold text-white">Direct in passes</p><p className="mt-1 text-xs text-[#858692]">Build a scene without losing the thread.</p></div></div><div className="mt-7 flex items-center gap-2 overflow-hidden">{['Idea', 'Composition', 'Light', 'Frame'].map((step, i) => <div key={step} className="flex min-w-0 flex-1 items-center gap-2"><span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold ${i === 0 ? 'bg-[#6C5CE7] text-white' : 'border border-white/15 text-[#7c7d8a]'}`}>{i + 1}</span><span className="truncate text-[10px] font-semibold text-[#878896]">{step}</span>{i < 3 && <span className="h-px min-w-4 flex-1 bg-white/10" />}</div>)}</div></div><div className="rounded-[22px] border border-[#ff4757]/15 bg-[#24141b] p-6"><div className="af-kicker !text-[#ff7a86]">Credits pulse</div><div className="mt-3 flex items-end justify-between"><span data-testid="text-credit-count" className="text-3xl font-extrabold text-white">{credits}</span><span className="mb-1 text-xs text-[#a79aa0]">of 100 student credits</span></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#43232d]"><div className="h-full rounded-full bg-[#FF4757] transition-all duration-300" style={{ width: `${credits}%` }} /></div><p className="mt-3 text-[11px] leading-5 text-[#ba9da3]">Credits are deducted only after a successful mock generation.</p></div></div></section>;
 }
 
 function History() {
@@ -269,7 +313,8 @@ function Footer() {
 }
 
 function Home() {
-  return <div className="af-app"><Nav /><main><Hero /><StudentBanner /><Studio /><History /><Gallery /><Pricing /></main><Footer /></div>;
+  const [credits, setCredits] = useState(100);
+  return <div className="af-app"><Nav /><main><Hero /><StudentBanner /><Studio credits={credits} onSceneSuccess={() => setCredits((current) => Math.max(current - 1, 0))} onSketchSuccess={() => setCredits((current) => Math.max(current - 2, 0))} /><History /><Gallery /><Pricing /></main><Footer /></div>;
 }
 
 function Auth({ mode }: { mode: 'login' | 'signup' }) {
