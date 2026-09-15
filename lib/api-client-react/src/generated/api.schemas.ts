@@ -43,6 +43,86 @@ export interface UploadResult {
   previewUrl: string;
 }
 
+export interface CharacterReferenceInput {
+  /** @minLength 1 */
+  characterName: string;
+  fileName: string;
+  mimeType: string;
+  dataUrl: string;
+  notes?: string;
+}
+
+export interface CharacterReference {
+  assetId: string;
+  characterName: string;
+  fileName: string;
+  previewUrl: string;
+  notes: string;
+}
+
+export type VideoGenerationInputAspectRatio = typeof VideoGenerationInputAspectRatio[keyof typeof VideoGenerationInputAspectRatio];
+
+
+export const VideoGenerationInputAspectRatio = {
+  '16:9': '16:9',
+  '9:16': '9:16',
+  '1:1': '1:1',
+} as const;
+
+export interface VideoGenerationInput {
+  /** @minLength 40 */
+  prompt: string;
+  /**
+     * @minimum 60
+     * @maximum 300
+     */
+  durationSeconds: number;
+  aspectRatio: VideoGenerationInputAspectRatio;
+  /** @minLength 1 */
+  style: string;
+  /** @minLength 1 */
+  cameraMovement: string;
+  /** @maxItems 4 */
+  characterReferenceIds?: string[];
+}
+
+export interface StoryboardShot {
+  shotNumber: number;
+  startSeconds: number;
+  durationSeconds: number;
+  framing: string;
+  cameraMovement: string;
+  action: string;
+  continuity: string;
+}
+
+export type VideoJobStatus = typeof VideoJobStatus[keyof typeof VideoJobStatus];
+
+
+export const VideoJobStatus = {
+  provider_unavailable: 'provider_unavailable',
+  queued: 'queued',
+  processing: 'processing',
+  complete: 'complete',
+  failed: 'failed',
+} as const;
+
+export interface VideoJob {
+  id: number;
+  prompt: string;
+  durationSeconds: number;
+  aspectRatio: string;
+  style: string;
+  cameraMovement: string;
+  characterReferenceIds: string[];
+  storyboard: StoryboardShot[];
+  status: VideoJobStatus;
+  provider: string;
+  outputUrl?: string | null;
+  message: string;
+  createdAt: string;
+}
+
 export interface GenerationResult {
   id: number;
   kind: string;

@@ -20,6 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CharacterReference,
+  CharacterReferenceInput,
   GalleryPost,
   GenerationResult,
   HealthStatus,
@@ -27,7 +29,9 @@ import type {
   SceneGenerationInput,
   SketchConversionInput,
   UploadInput,
-  UploadResult
+  UploadResult,
+  VideoGenerationInput,
+  VideoJob
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -310,6 +314,259 @@ export const useConvertSketch = <TError = ErrorType<void>,
       > => {
       return useMutation(getConvertSketchMutationOptions(options));
     }
+
+export const getRegisterCharacterReferenceUrl = () => {
+
+
+
+
+  return `/api/character-references`
+}
+
+/**
+ * @summary Register a character reference for a video scene
+ */
+export const registerCharacterReference = async (characterReferenceInput: CharacterReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<CharacterReference> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CharacterReference>(getRegisterCharacterReferenceUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(characterReferenceInput)
+  }
+);}
+
+
+
+
+
+export const getRegisterCharacterReferenceMutationKey = () => ['registerCharacterReference'] as const;
+
+export const getRegisterCharacterReferenceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerCharacterReference>>, TError,RegisterCharacterReferenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerCharacterReference>>, TError,RegisterCharacterReferenceMutationVariables, TContext> => {
+
+const mutationKey = getRegisterCharacterReferenceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerCharacterReference>>, RegisterCharacterReferenceMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerCharacterReference(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterCharacterReferenceMutationResult = NonNullable<Awaited<ReturnType<typeof registerCharacterReference>>>
+    export type RegisterCharacterReferenceMutationBody = BodyType<CharacterReferenceInput>
+    export type RegisterCharacterReferenceMutationError = ErrorType<void>
+    export type RegisterCharacterReferenceMutationVariables = {data: BodyType<CharacterReferenceInput>}
+
+    /**
+ * @summary Register a character reference for a video scene
+ */
+export const useRegisterCharacterReference = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerCharacterReference>>, TError,RegisterCharacterReferenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerCharacterReference>>,
+        TError,
+        RegisterCharacterReferenceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRegisterCharacterReferenceMutationOptions(options));
+    }
+
+export const getGenerateVideoUrl = () => {
+
+
+
+
+  return `/api/generate-video`
+}
+
+/**
+ * @summary Plan and queue a minimum 60-second anime video scene
+ */
+export const generateVideo = async (videoGenerationInput: VideoGenerationInput, options?: Parameters<typeof customFetch>[1]): Promise<VideoJob> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<VideoJob>(getGenerateVideoUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(videoGenerationInput)
+  }
+);}
+
+
+
+
+
+export const getGenerateVideoMutationKey = () => ['generateVideo'] as const;
+
+export const getGenerateVideoMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateVideo>>, TError,GenerateVideoMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateVideo>>, TError,GenerateVideoMutationVariables, TContext> => {
+
+const mutationKey = getGenerateVideoMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateVideo>>, GenerateVideoMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateVideo(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateVideoMutationResult = NonNullable<Awaited<ReturnType<typeof generateVideo>>>
+    export type GenerateVideoMutationBody = BodyType<VideoGenerationInput>
+    export type GenerateVideoMutationError = ErrorType<void>
+    export type GenerateVideoMutationVariables = {data: BodyType<VideoGenerationInput>}
+
+    /**
+ * @summary Plan and queue a minimum 60-second anime video scene
+ */
+export const useGenerateVideo = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateVideo>>, TError,GenerateVideoMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateVideo>>,
+        TError,
+        GenerateVideoMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGenerateVideoMutationOptions(options));
+    }
+
+export const getGetVideoJobUrl = (id: number,) => {
+
+
+
+
+  return `/api/video-jobs/${id}`
+}
+
+/**
+ * @summary Get a video generation job and storyboard
+ */
+export const getVideoJob = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<VideoJob> => {
+
+  return customFetch<VideoJob>(getGetVideoJobUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVideoJobQueryKey = (id: number,) => {
+    return [
+    `/api/video-jobs/${id}`
+    ] as const;
+    }
+
+
+export const getGetVideoJobQueryOptions = <TData = Awaited<ReturnType<typeof getVideoJob>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVideoJob>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVideoJobQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVideoJob>>> = ({ signal }) => getVideoJob(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVideoJob>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVideoJobQueryResult = NonNullable<Awaited<ReturnType<typeof getVideoJob>>>
+export type GetVideoJobQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a video generation job and storyboard
+ */
+
+export function useGetVideoJob<TData = Awaited<ReturnType<typeof getVideoJob>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVideoJob>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVideoJobQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getUploadAssetUrl = () => {
 

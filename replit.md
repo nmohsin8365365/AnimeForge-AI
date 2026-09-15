@@ -1,6 +1,6 @@
 # AnimeForge AI
 
-AnimeForge AI is a full-stack anime creation studio for turning student and creator prompts or sketches into mock anime scenes and characters.
+AnimeForge AI is a full-stack anime video-planning studio for turning detailed student and creator prompts into minimum 60-second, multi-shot anime scene jobs.
 
 ## Run & Operate
 
@@ -24,29 +24,29 @@ AnimeForge AI is a full-stack anime creation studio for turning student and crea
 
 - `artifacts/animeforge-ai/src/App.tsx` — responsive product UI, auth screens, generation flows, gallery, history, and pricing.
 - `artifacts/animeforge-ai/src/index.css` — AnimeForge visual system, effects, and responsive utilities.
-- `artifacts/api-server/src/routes/` — Express endpoints for scene generation, sketch conversion, uploads, gallery, likes, and history.
-- `artifacts/api-server/src/services/` — replaceable mock generation and gallery service layer.
+- `artifacts/api-server/src/routes/` — Express endpoints for video planning, character references, legacy generation, gallery, likes, and history.
+- `artifacts/api-server/src/services/` — provider-ready video generation and gallery service layers.
 - `lib/api-spec/openapi.yaml` — source of truth for the shared API contract.
-- `lib/db/src/schema/` — Drizzle tables for generations and gallery posts.
+- `lib/db/src/schema/` — Drizzle tables for video jobs, legacy generations, and gallery posts.
 
 ## Architecture decisions
 
-- Mock generation results are stored in PostgreSQL so a real image or image-to-image provider can replace the service layer without changing the client contract.
-- Uploaded sketches are currently registered as preview data URLs for the prototype; persistent binary storage can be added later behind the same upload endpoint.
+- Video requests are stored in PostgreSQL as provider-independent jobs with a generated storyboard; the current provider adapter deliberately returns `provider_unavailable` until a real video API or GPU worker is connected.
+- Character references are registered with asset IDs and preview data URLs for the current provider-free prototype. Persistent object storage and authenticated ownership should be added before production uploads.
 - The frontend uses generated React Query hooks from the OpenAPI contract rather than hand-written fetch wrappers.
 - Authentication screens intentionally remain provider-ready UI; real account/session handling can be added through Clerk without coupling it to the generation forms.
 
 ## Product
 
-- Create mock anime scenes from prompts with style and aspect-ratio controls.
-- Upload a PNG/JPG/WEBP sketch, preview it immediately, tune fidelity and color, and convert it into a mock character result.
-- View generation history, browse and like student gallery posts, verify student status, and see credit/pricing plans.
+- Create a detailed minimum 60-second anime video job with duration, style, aspect ratio, camera movement, and character reference controls.
+- Generate a storyboard with multiple shots and continuity notes instead of displaying unrelated mock image results.
+- View video-job history, browse and like student gallery posts, verify student status, and see pricing plans.
 - Use responsive mobile navigation and login/sign-up screens.
 
 ## User preferences
 
 - Keep the visual direction futuristic, dark, neon-accented, glassy, and approachable for beginners.
-- Keep prototype AI behavior clearly labeled as mock until a real provider is connected.
+- Keep provider-unavailable video behavior clearly labeled and never substitute a mock image for a video result.
 
 ## Gotchas
 

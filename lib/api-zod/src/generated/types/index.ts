@@ -6,11 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './characterReference';
+export * from './characterReferenceInput';
 export * from './galleryPost';
 export * from './generationResult';
 export * from './healthStatus';
 export * from './historyItem';
 export * from './sceneGenerationInput';
 export * from './sketchConversionInput';
+export * from './storyboardShot';
 export * from './uploadInput';
 export * from './uploadResult';
+export * from './videoGenerationInput';
+export * from './videoGenerationInputAspectRatio';
+export * from './videoJob';
+export * from './videoJobStatus';

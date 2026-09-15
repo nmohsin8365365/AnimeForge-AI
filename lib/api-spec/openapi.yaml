@@ -11,11 +11,13 @@ tags:
   - name: health
     description: Health operations
   - name: generation
-    description: Mock AI generation operations
+    description: Video generation and reference operations
   - name: gallery
     description: Community gallery operations
   - name: history
     description: User generation history
+  - name: video
+    description: Video scene planning and generation jobs
 paths:
   /healthz:
     get:
@@ -70,6 +72,66 @@ paths:
                 $ref: "#/components/schemas/GenerationResult"
         "400":
           description: Invalid input
+  /character-references:
+    post:
+      operationId: registerCharacterReference
+      tags: [video]
+      summary: Register a character reference for a video scene
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CharacterReferenceInput"
+      responses:
+        "200":
+          description: Character reference
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterReference"
+        "400":
+          description: Invalid reference
+  /generate-video:
+    post:
+      operationId: generateVideo
+      tags: [video]
+      summary: Plan and queue a minimum 60-second anime video scene
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoGenerationInput"
+      responses:
+        "200":
+          description: Video generation job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoJob"
+        "400":
+          description: Invalid input
+  /video-jobs/{id}:
+    get:
+      operationId: getVideoJob
+      tags: [video]
+      summary: Get a video generation job and storyboard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Video generation job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoJob"
+        "404":
+          description: Job not found
   /upload:
     post:
       operationId: uploadAsset
@@ -192,6 +254,114 @@ components:
         previewUrl:
           type: string
       required: [assetId, fileName, previewUrl]
+    CharacterReferenceInput:
+      type: object
+      properties:
+        characterName:
+          type: string
+          minLength: 1
+        fileName:
+          type: string
+        mimeType:
+          type: string
+        dataUrl:
+          type: string
+        notes:
+          type: string
+      required: [characterName, fileName, mimeType, dataUrl]
+    CharacterReference:
+      type: object
+      properties:
+        assetId:
+          type: string
+        characterName:
+          type: string
+        fileName:
+          type: string
+        previewUrl:
+          type: string
+        notes:
+          type: string
+      required: [assetId, characterName, fileName, previewUrl, notes]
+    VideoGenerationInput:
+      type: object
+      properties:
+        prompt:
+          type: string
+          minLength: 40
+        durationSeconds:
+          type: integer
+          minimum: 60
+          maximum: 300
+        aspectRatio:
+          type: string
+          enum: [16:9, 9:16, 1:1]
+        style:
+          type: string
+          minLength: 1
+        cameraMovement:
+          type: string
+          minLength: 1
+        characterReferenceIds:
+          type: array
+          items:
+            type: string
+          maxItems: 4
+      required: [prompt, durationSeconds, aspectRatio, style, cameraMovement]
+    StoryboardShot:
+      type: object
+      properties:
+        shotNumber:
+          type: integer
+        startSeconds:
+          type: integer
+        durationSeconds:
+          type: integer
+        framing:
+          type: string
+        cameraMovement:
+          type: string
+        action:
+          type: string
+        continuity:
+          type: string
+      required: [shotNumber, startSeconds, durationSeconds, framing, cameraMovement, action, continuity]
+    VideoJob:
+      type: object
+      properties:
+        id:
+          type: integer
+        prompt:
+          type: string
+        durationSeconds:
+          type: integer
+        aspectRatio:
+          type: string
+        style:
+          type: string
+        cameraMovement:
+          type: string
+        characterReferenceIds:
+          type: array
+          items:
+            type: string
+        storyboard:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryboardShot"
+        status:
+          type: string
+          enum: [provider_unavailable, queued, processing, complete, failed]
+        provider:
+          type: string
+        outputUrl:
+          type: string
+          nullable: true
+        message:
+          type: string
+        createdAt:
+          type: string
+      required: [id, prompt, durationSeconds, aspectRatio, style, cameraMovement, characterReferenceIds, storyboard, status, provider, message, createdAt]
     GenerationResult:
       type: object
       properties:

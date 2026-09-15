@@ -1,23 +1,23 @@
 import { Router, type IRouter } from "express";
 import { GetHistoryResponse } from "@workspace/api-zod";
-import { db, generationsTable } from "@workspace/db";
+import { db, videoJobsTable } from "@workspace/db";
 import { desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
 router.get("/history", async (_req, res): Promise<void> => {
-  const generations = await db
+  const jobs = await db
     .select()
-    .from(generationsTable)
-    .orderBy(desc(generationsTable.createdAt))
+    .from(videoJobsTable)
+    .orderBy(desc(videoJobsTable.createdAt))
     .limit(12);
   res.json(
     GetHistoryResponse.parse(
-      generations.map(({ id, kind, prompt, imageUrl, createdAt, status }) => ({
+      jobs.map(({ id, prompt, createdAt, status }) => ({
         id,
-        kind,
+        kind: "video",
         prompt,
-        imageUrl,
+        imageUrl: "",
         createdAt: createdAt.toISOString(),
         status,
       })),

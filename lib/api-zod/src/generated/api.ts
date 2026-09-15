@@ -75,6 +75,109 @@ export const ConvertSketchResponse = zod.object({
 
 
 /**
+ * @summary Register a character reference for a video scene
+ */
+
+
+
+export const RegisterCharacterReferenceBody = zod.object({
+  "characterName": zod.string().min(1),
+  "fileName": zod.string(),
+  "mimeType": zod.string(),
+  "dataUrl": zod.string(),
+  "notes": zod.string().optional()
+})
+
+export const RegisterCharacterReferenceResponse = zod.object({
+  "assetId": zod.string(),
+  "characterName": zod.string(),
+  "fileName": zod.string(),
+  "previewUrl": zod.string(),
+  "notes": zod.string()
+})
+
+
+/**
+ * @summary Plan and queue a minimum 60-second anime video scene
+ */
+export const generateVideoBodyPromptMin = 40;
+
+export const generateVideoBodyDurationSecondsMin = 60;
+export const generateVideoBodyDurationSecondsMax = 300;
+
+
+
+export const generateVideoBodyCharacterReferenceIdsMax = 4;
+
+
+
+export const GenerateVideoBody = zod.object({
+  "prompt": zod.string().min(generateVideoBodyPromptMin),
+  "durationSeconds": zod.number().int().min(generateVideoBodyDurationSecondsMin).max(generateVideoBodyDurationSecondsMax),
+  "aspectRatio": zod.enum(['16:9', '9:16', '1:1']),
+  "style": zod.string().min(1),
+  "cameraMovement": zod.string().min(1),
+  "characterReferenceIds": zod.array(zod.string()).max(generateVideoBodyCharacterReferenceIdsMax).optional()
+})
+
+export const GenerateVideoResponse = zod.object({
+  "id": zod.number().int(),
+  "prompt": zod.string(),
+  "durationSeconds": zod.number().int(),
+  "aspectRatio": zod.string(),
+  "style": zod.string(),
+  "cameraMovement": zod.string(),
+  "characterReferenceIds": zod.array(zod.string()),
+  "storyboard": zod.array(zod.object({
+  "shotNumber": zod.number().int(),
+  "startSeconds": zod.number().int(),
+  "durationSeconds": zod.number().int(),
+  "framing": zod.string(),
+  "cameraMovement": zod.string(),
+  "action": zod.string(),
+  "continuity": zod.string()
+})),
+  "status": zod.enum(['provider_unavailable', 'queued', 'processing', 'complete', 'failed']),
+  "provider": zod.string(),
+  "outputUrl": zod.string().nullish(),
+  "message": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Get a video generation job and storyboard
+ */
+export const GetVideoJobParams = zod.object({
+  "id": zod.coerce.number().int()
+})
+
+export const GetVideoJobResponse = zod.object({
+  "id": zod.number().int(),
+  "prompt": zod.string(),
+  "durationSeconds": zod.number().int(),
+  "aspectRatio": zod.string(),
+  "style": zod.string(),
+  "cameraMovement": zod.string(),
+  "characterReferenceIds": zod.array(zod.string()),
+  "storyboard": zod.array(zod.object({
+  "shotNumber": zod.number().int(),
+  "startSeconds": zod.number().int(),
+  "durationSeconds": zod.number().int(),
+  "framing": zod.string(),
+  "cameraMovement": zod.string(),
+  "action": zod.string(),
+  "continuity": zod.string()
+})),
+  "status": zod.enum(['provider_unavailable', 'queued', 'processing', 'complete', 'failed']),
+  "provider": zod.string(),
+  "outputUrl": zod.string().nullish(),
+  "message": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Register an uploaded sketch asset
  */
 export const UploadAssetBody = zod.object({

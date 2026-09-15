@@ -19,3 +19,4 @@
 
 export * from "./generations";
 export * from "./gallery-posts";
+export * from "./video-jobs";
